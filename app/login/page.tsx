@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { RegisterModal } from "../components/RegisterModal";
 
+import { auth } from "@/lib/firebaseClient";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { FirebaseError } from "firebase/app";
+
 export default function Login() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -16,12 +20,23 @@ export default function Login() {
     // Opcional: abrir modal de login após cadastro
   };
 
-  const handleLogin = (email: string, password: string) => {
-    console.log('Login com:', { email, password });
-    // Aqui você autentica o usuário
-    // Se sucesso, redireciona para o dashboard
-    router.push('/dashboard');
-  };
+const handleLogin = async (email: string, password: string) => {
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const user = userCredential.user;
+    console.log("Login bem-sucedido:", user.uid);
+    router.push('/dashboard'); // Redireciona após o sucesso
+  } catch (error ) {
+    console.error("Erro no login:", error);
+    // Trate os erros (ex: usuário não encontrado, senha incorreta)
+    if(error instanceof FirebaseError) {
+      if(error.code === 'auth/user-not-found') {
+        alert('Usuário não encontrado. Verifique seu e-mail ou cadastre-se.');
+      }
+    }
+    alert('E-mail ou senha inválidos.');
+  }
+};
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-black font-sans">

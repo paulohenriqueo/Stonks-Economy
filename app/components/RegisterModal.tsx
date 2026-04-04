@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import { X, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
 
+import { auth } from "@/lib/firebaseClient";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { FirebaseError } from "firebase/app";
+
 interface RegisterModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -56,13 +60,38 @@ export function RegisterModal({ isOpen, onClose, onRegister }: RegisterModalProp
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (validateForm()) {
-      const { confirmPassword, ...registerData } = formData;
-      onRegister(registerData);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (validateForm()) {
+    try {
+      // Tenta criar o usuário no Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      );
+      const user = userCredential.user;
+      console.log("Usuário cadastrado:", user.uid);
+      
+      // Aqui você pode, opcionalmente, salvar dados extras (como o nome) no Firestore
+
+      onRegister({ name: formData.name, email: formData.email, password: formData.password }); // Fecha o modal
+      onClose();
+    } catch (error) {
+      console.error("Erro no cadastro:", error);
+      // Trate os erros (ex: email já em uso, senha fraca)
+      if (error instanceof FirebaseError) {
+        if (error.code === 'auth/email-already-in-use') {
+            alert('Este e-mail já está em uso.');
+        } else {
+            alert('Erro ao cadastrar. Tente novamente.');
+        }
+      } else {
+          alert('Erro desconhecido.');
+      }
     }
-  };
+  }
+};
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
