@@ -1,0 +1,72 @@
+# Ambiente de desenvolvimento: app Next.js com hot reload + Firebase Emulator Suite.
+#
+#   docker compose up --build
+#
+#   App:          http://localhost:3000
+#   Emulator UI:  http://localhost:4000  (usuários do Auth e dados do Firestore)
+#
+# Os dados do emulador são exportados para o volume emulator-data ao parar
+# (docker compose stop/down) e importados na próxima subida. Para zerar tudo: docker compose down -v
+#
+# As portas ficam presas a 127.0.0.1: os emuladores não têm autenticação (qualquer um com
+# acesso às portas lê e apaga os dados, inclusive as senhas das contas de teste), então
+# nada fica exposto para a rede. Como eles aceitam requisições de qualquer origem, um site
+# aberto no navegador ainda alcança o localhost: use só senhas descartáveis.
+name: stonks-economy
+
+services:
+  firebase:
+    build: ./docker/firebase-emulator
+    init: true
+    volumes:
+      # Só leitura: o emulador lê firebase.json e firestore.rules, mas não escreve no repositório.
+      - ./:/workspace:ro
+      - emulator-data:/data
+    ports:
+      - "127.0.0.1:4000:4000" # Emulator UI
+      - "127.0.0.1:4500:4500" # Logs (aba "Logs" da UI)
+      - "127.0.0.1:8080:8080" # Firestore
+      - "127.0.0.1:9099:9099" # Auth
+      - "127.0.0.1:9150:9150" # Firestore websocket (aba "Requests" da UI)
+    healthcheck:
+      # Saudável quando o hub já lista Auth, Firestore e a UI (o web só sobe depois disso).
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:4400/emulators').then(r => r.json()).then(e => process.exit(e.auth && e.firestore && e.ui ? 0 : 1), () => process.exit(1))"
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    stop_grace_period: 30s
+
+  web:
+    build:
+      context: .
+      target: dev
+    init: true
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      # Projeto "demo-*": o Firebase trata como só-emulador e não acessa nada real.
+      NEXT_PUBLIC_FIREBASE_API_KEY: demo-api-key
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: demo-stonks-economy.firebaseapp.com
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: demo-stonks-economy
+      NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:0000000000000000"
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ""
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ""
+      # O SDK roda no navegador (na sua máquina) e acessa as portas publicadas acima.
+      NEXT_PUBLIC_FIREBASE_EMULATOR_HOST: 127.0.0.1
+      # Usado pelos testes das regras (npm run test:rules), que rodam dentro deste container.
+      FIRESTORE_EMULATOR_HOST: firebase:8080
+    volumes:
+      - ./:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      firebase:
+        condition: service_healthy
+
+volumes:
+  emulator-data:

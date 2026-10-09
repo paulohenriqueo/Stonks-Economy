@@ -1,0 +1,40 @@
+rules_version = '2';
+
+// Regras de segurança do Stonks Economy.
+//
+// Cada usuário só acessa os próprios dados, em users/{uid}. Tudo que não está
+// liberado explicitamente aqui é negado, que é o comportamento padrão do Firestore.
+// Isso inclui as subcoleções de users/{uid}: contasFixas, parcelamentos e meses
+// entram na fase 2, junto com a validação de cada campo.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function isValidName(nome) {
+      return nome is string && nome.size() >= 1 && nome.size() <= 80;
+    }
+
+    // Perfil: { nome: string, email?: string, criadoEm: timestamp do servidor }
+    function isValidNewProfile(data) {
+      return data.keys().hasAll(['nome', 'criadoEm'])
+        && data.keys().hasOnly(['nome', 'email', 'criadoEm'])
+        && isValidName(data.nome)
+        && (!('email' in data) || data.email == request.auth.token.email)
+        && data.criadoEm == request.time;
+    }
+
+    match /users/{uid} {
+      // Só leitura direta do próprio documento: ninguém lista os usuários.
+      allow get: if isOwner(uid);
+      allow create: if isOwner(uid) && isValidNewProfile(request.resource.data);
+      // Depois de criado, o perfil só pode mudar o nome.
+      allow update: if isOwner(uid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['nome'])
+        && isValidName(request.resource.data.nome);
+      allow delete: if false;
+    }
+  }
+}
