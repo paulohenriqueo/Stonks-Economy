@@ -1,0 +1,26 @@
+# Dependências e saídas de build (são geradas dentro da imagem)
+node_modules
+.next
+out
+coverage
+*.tsbuildinfo
+next-env.d.ts
+
+# Git, editores e sistema
+.git
+.github
+.vscode
+.idea
+.DS_Store
+
+# Variáveis de ambiente locais (a configuração entra por variáveis no container)
+.env*
+!.env.example
+
+# Logs e exportações do Firebase Emulator
+*.log
+firebase-export-*
+
+# Infra de desenvolvimento que não faz parte da imagem do app
+docker-compose*.yml
+docker/firebase-emulator

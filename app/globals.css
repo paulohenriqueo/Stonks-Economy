@@ -1,26 +1,67 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Identidade visual do Stonks Economy (dark-first).
+ * Paleta trazida do antigo tailwind.config.js, com os mesmos nomes:
+ * bg-background, bg-surface, text-text-primary, bg-primary, text-danger etc.
+ */
+@theme {
+  /* 🎨 Base neutra */
+  --color-background: #0f172a;
+  --color-background-secondary: #111827;
+  --color-surface: #1f2933;
+  --color-surface-light: #374151;
+
+  /* 📝 Texto */
+  --color-text-primary: #e5e7eb;
+  --color-text-muted: #9ca3af; /* texto secundário legível (contraste AA sobre fundo e surface) */
+  --color-text-secondary: #6b7280; /* ícones e detalhes; baixo contraste para texto corrido */
+  --color-text-dark: #111827; /* usado no light mode */
+
+  /* 🔵 Azul (principal) */
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-primary-light: #60a5fa;
+  --color-primary-softer: #93c5fd;
+
+  /* 💰 Estados financeiros (as variantes -light são para texto sobre fundo escuro) */
+  --color-success: #22c55e; /* ganhos */
+  --color-success-light: #4ade80;
+  --color-danger: #ef4444; /* gastos/dívidas */
+  --color-danger-light: #f87171;
+  --color-warning: #f59e0b; /* alertas */
+
+  /* ☀️ Light mode (reservado) */
+  --color-light-background: #f9fafb;
+  --color-light-surface: #ffffff;
+
+  /* 🌫️ Sombras suaves */
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.25);
+  --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.2);
+
+  /* ⚡ Transições */
+  --default-transition-duration: 200ms;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* O app é só tema escuro: a variante dark: segue a classe .dark do <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background font-sans text-text-primary antialiased;
+  }
+
+  /* O Edge desenha um "olho" próprio em campos de senha; o app já tem o seu. */
+  input::-ms-reveal {
+    display: none;
+  }
 }

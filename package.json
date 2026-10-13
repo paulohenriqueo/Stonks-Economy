@@ -2,28 +2,36 @@
   "name": "stonks-economy",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "preview": "npx --yes serve@14.2.6 out",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:rules": "vitest run --config vitest.rules.config.mts"
   },
   "dependencies": {
-    "firebase": "^12.11.0",
-    "firebase-admin": "^13.7.0",
+    "firebase": "^12.19.0",
     "lucide-react": "^1.7.0",
-    "next": "16.1.7",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
-    "tailwindcss": "^1.9.6"
+    "next": "16.4.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.2.2",
-    "@types/node": "^20",
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.1.7",
-    "typescript": "^5"
+    "eslint-config-next": "16.4.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5",
+    "vitest": "^5.0.3"
   }
 }
